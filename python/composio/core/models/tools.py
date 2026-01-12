@@ -61,6 +61,7 @@ class Tools(Resource, t.Generic[TProvider]):
         provider: TProvider,
         file_download_dir: t.Optional[str] = None,
         toolkit_versions: t.Optional[ToolkitVersionParam] = None,
+        auto_upload_download_files: bool = True,
     ):
         """
         Initialize the tools resource.
@@ -69,12 +70,14 @@ class Tools(Resource, t.Generic[TProvider]):
         :param provider: The provider to use for the tools resource.
         :param file_download_dir: Output directory for downloadable files
         :param toolkit_versions: The versions of the toolkits to use. Defaults to 'latest' if not provided.
+        :param auto_upload_download_files: Whether to automatically upload and download files. Defaults to True.
         """
         self._client = client
         self._custom_tools = CustomTools(client)
         self._tool_schemas: t.Dict[str, Tool] = {}
         self._file_helper = FileHelper(client=self._client, outdir=file_download_dir)
         self._toolkit_versions = toolkit_versions
+        self._auto_upload_download_files = auto_upload_download_files
 
         self.custom_tool = self._custom_tools.register
         self.provider = provider
@@ -192,10 +195,22 @@ class Tools(Resource, t.Generic[TProvider]):
         self._tool_schemas.update(
             {tool.slug: tool.model_copy(deep=True) for tool in tools_list}
         )
+
+        # Always enhance schema descriptions (type hints and required notes)
+        # regardless of auto_upload_download_files setting
         for tool in tools_list:
-            tool.input_parameters = self._file_helper.process_schema_recursively(
+            tool.input_parameters = self._file_helper.enhance_schema_descriptions(
                 schema=tool.input_parameters,
             )
+
+        # Only process file_uploadable schemas when auto_upload_download_files is True
+        if self._auto_upload_download_files:
+            for tool in tools_list:
+                tool.input_parameters = (
+                    self._file_helper.process_file_uploadable_schema(
+                        schema=tool.input_parameters,
+                    )
+                )
 
         if issubclass(type(self.provider), NonAgenticProvider):
             return t.cast(NonAgenticProvider, self.provider).wrap_tools(
@@ -366,9 +381,11 @@ class Tools(Resource, t.Generic[TProvider]):
                 processed_arguments = modified_params.get("arguments", arguments)
 
             # Execute the tool via the session's execute_meta endpoint
+            # Note: execute_meta accepts regular tool slugs at runtime, not just meta tool slugs
+            # The type signature expects Literal meta tool slugs, but runtime accepts any str
             response = self._client.tool_router.session.execute_meta(
                 session_id=session_id,
-                slug=slug,
+                slug=slug,  # type: ignore[arg-type]
                 arguments=processed_arguments,
             )
 
@@ -566,10 +583,11 @@ class Tools(Resource, t.Generic[TProvider]):
                 "dangerously_skip_version_check", dangerously_skip_version_check
             )
 
-        arguments = self._file_helper.substitute_file_uploads(
-            tool=tool,
-            request=arguments,
-        )
+        if self._auto_upload_download_files:
+            arguments = self._file_helper.substitute_file_uploads(
+                tool=tool,
+                request=arguments,
+            )
         response = (
             self._execute_custom_tool(
                 slug=slug,
@@ -589,10 +607,11 @@ class Tools(Resource, t.Generic[TProvider]):
                 dangerously_skip_version_check=dangerously_skip_version_check,
             )
         )
-        response = self._file_helper.substitute_file_downloads(
-            tool=tool,
-            response=response,
-        )
+        if self._auto_upload_download_files:
+            response = self._file_helper.substitute_file_downloads(
+                tool=tool,
+                response=response,
+            )
         if modifiers is not None:
             response = apply_modifier_by_type(
                 modifiers=modifiers,

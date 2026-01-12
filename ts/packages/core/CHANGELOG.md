@@ -1,5 +1,23 @@
 # @composio/core
 
+## 0.3.4
+
+### Patch Changes
+
+- 019f54f: Fix method binding for top level tool router methods
+
+## 0.3.3
+
+### Patch Changes
+
+- a76b002: Add support for enable/disable tags and search toolkits in tool router
+
+## 0.3.2
+
+### Patch Changes
+
+- 69cfede: Update client version and add openWorldHintSupport in toolrouter tag filters. Removes isLocal param in toolkit fetching
+
 ## 0.3.1
 
 ### Patch Changes
