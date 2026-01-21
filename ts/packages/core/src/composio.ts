@@ -14,7 +14,7 @@ import { checkForLatestVersionFromNPM } from './utils/version';
 import { OpenAIProvider } from './provider/OpenAIProvider';
 import { version } from '../package.json';
 import type { ComposioRequestHeaders } from './types/composio.types';
-import { Files } from './models/Files';
+import { Files } from '#files';
 import { getDefaultHeaders } from './utils/session';
 import { ToolkitVersionParam } from './types/tool.types';
 import { ToolRouter } from './models/ToolRouter';
@@ -370,5 +370,36 @@ export class Composio<
       ...this.config,
       defaultHeaders: sessionHeaders,
     });
+  }
+
+  /**
+   * Flush any pending telemetry and wait for it to complete.
+   *
+   * In Node.js-compatible environments, telemetry is automatically flushed on process exit.
+   * However, in environments like Cloudflare Workers that don't support process exit events,
+   * you should call this method manually to ensure all telemetry is sent.
+   *
+   * @returns {Promise<void>} A promise that resolves when all pending telemetry has been sent.
+   *
+   * @example
+   * ```typescript
+   * // In a Cloudflare Worker, use ctx.waitUntil to ensure telemetry is flushed
+   * export default {
+   *   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+   *     const composio = new Composio({ apiKey: env.COMPOSIO_API_KEY });
+   *
+   *     // Do your work...
+   *     const result = await composio.tools.execute(...);
+   *
+   *     // Ensure telemetry flushes before worker terminates
+   *     ctx.waitUntil(composio.flush());
+   *
+   *     return new Response(JSON.stringify(result));
+   *   }
+   * };
+   * ```
+   */
+  async flush(): Promise<void> {
+    await telemetry.flush();
   }
 }

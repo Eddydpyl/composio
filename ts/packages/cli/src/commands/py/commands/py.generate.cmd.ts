@@ -2,6 +2,7 @@ import { Command, Options } from '@effect/cli';
 import { pipe, Console, Effect, Option, Array } from 'effect';
 import { FileSystem } from '@effect/platform';
 import { ComposioToolkitsRepository } from 'src/services/composio-clients';
+import { logMetrics } from 'src/effects/log-metrics';
 import type { GetCmdParams } from 'src/type-utils';
 import { NodeProcess } from 'src/services/node-process';
 import { createToolkitIndex } from 'src/generation/create-toolkit-index';
@@ -21,12 +22,14 @@ export const outputOpt = Options.optional(
 export const toolkitsOpt = Options.text('toolkits').pipe(
   Options.repeated,
   Options.withDescription(
-    'Filter output to only include the specified toolkits. Can be specified multiple times (e.g., --toolkits gmail --toolkits slack)'
+    'Only generate types for specific toolkits (e.g., --toolkits gmail --toolkits slack)'
   )
 );
 
 const _pyCmd$Generate = Command.make('generate', { outputOpt, toolkitsOpt }).pipe(
-  Command.withDescription('Updates the local type stubs with the latest app data.')
+  Command.withDescription(
+    'Generate Python type stubs for toolkits, tools, and triggers from the Composio API'
+  )
 );
 
 export const pyCmd$Generate = _pyCmd$Generate.pipe(Command.withHandler(generatePythonTypeStubs));
@@ -75,16 +78,12 @@ export function generatePythonTypeStubs({
           )
       : [];
 
-    const triggerTypesAsEnums = yield* Effect.logDebug('Fetching trigger types...').pipe(
-      Effect.flatMap(() => client.getTriggerTypesAsEnums())
-    );
-
     const [allToolkits, tools, triggerTypes] = yield* Effect.all(
       [
         Effect.logDebug('Fetching toolkits...').pipe(Effect.flatMap(() => client.getToolkits())),
         Effect.logDebug('Fetching tools...').pipe(Effect.flatMap(() => client.getToolsAsEnums())),
-        Effect.logDebug('Fetching trigger types payloads...').pipe(
-          Effect.flatMap(() => client.getTriggerTypes(triggerTypesAsEnums.length))
+        Effect.logDebug('Fetching trigger types...').pipe(
+          Effect.flatMap(() => client.getTriggerTypes())
         ),
       ],
       { concurrency: 'unbounded' }
@@ -133,6 +132,10 @@ export function generatePythonTypeStubs({
           `✅ Type stubs generated successfully.\n` +
             `Generated files are available at: ${outputDir}`
         );
+
+    // Log API metrics
+    const metrics = yield* client.getMetrics();
+    yield* logMetrics(metrics);
 
     return outputDir;
   });

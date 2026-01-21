@@ -1,5 +1,39 @@
 # @composio/llamaindex
 
+## 0.5.4
+
+### Patch Changes
+
+- Updated dependencies [b3f5875]
+  - @composio/core@0.5.4
+
+## 0.5.3
+
+### Patch Changes
+
+- Updated dependencies [498505d]
+  - @composio/core@0.5.3
+
+## 0.5.2
+
+### Patch Changes
+
+- Updated dependencies [277f02b]
+  - @composio/core@0.5.2
+
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [3055048]
+  - @composio/core@0.5.1
+
+## 0.5.0
+
+### Minor Changes
+
+- d80f3e2: Bump core dependency to 0.5.0
+
 ## 0.4.0
 
 ### Minor Changes

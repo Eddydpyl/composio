@@ -1,5 +1,35 @@
 # @composio/core
 
+## 0.5.4
+
+### Patch Changes
+
+- b3f5875: Fix multi connected account flag to check only active accounts
+
+## 0.5.3
+
+### Patch Changes
+
+- 498505d: Fix file upload and download in tools with anyOf schemas
+
+## 0.5.2
+
+### Patch Changes
+
+- 277f02b: Fix bundling issues with external providers
+
+## 0.5.1
+
+### Patch Changes
+
+- 3055048: Update client dependencies and auth config update params to be optional
+
+## 0.5.0
+
+### Minor Changes
+
+- ded64be: Add Cloudflare Workers compatibility for `@composio/core`, tested end-to-end.
+
 ## 0.4.0
 
 ### Minor Changes
