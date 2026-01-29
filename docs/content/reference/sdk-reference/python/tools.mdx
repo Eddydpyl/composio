@@ -156,7 +156,7 @@ def execute(slug: str, arguments: Dict, connected_account_id: str | None = ..., 
 Proxy a tool call to the Composio API
 
 ```python
-def proxy(endpoint: str, method: Literal['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'], body: object | None = ..., connected_account_id: str | None = ..., parameters: List[tool_proxy_params.Parameter | None] = ..., custom_connection_data: tool_proxy_params.CustomConnectionData | None = ...) -> tool_proxy_response.ToolProxyResponse
+def proxy(endpoint: str, method: Literal['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'], body: object | None = ..., connected_account_id: str | None = ..., parameters: List[tool_proxy_params.Parameter | None] = ...) -> tool_proxy_response.ToolProxyResponse
 ```
 
 **Parameters**
@@ -168,7 +168,6 @@ def proxy(endpoint: str, method: Literal['GET', 'POST', 'PUT', 'DELETE', 'PATCH'
 | `body?` | `object \| None` |
 | `connected_account_id?` | `str \| None` |
 | `parameters?` | `List[tool_proxy_params.Parameter \| None]` |
-| `custom_connection_data?` | `tool_proxy_params.CustomConnectionData \| None` |
 
 **Returns**
 
