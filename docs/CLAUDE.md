@@ -35,6 +35,7 @@ Detailed documentation for Claude is organized in `.claude/`:
 - [fumadocs.md](.claude/context/fumadocs.md) - Framework patterns, design tokens, MDX components
 - [twoslash.md](.claude/context/twoslash.md) - TypeScript code block type checking
 - [sdk-reference.md](.claude/context/sdk-reference.md) - SDK doc generation
+- [api-reference.md](.claude/context/api-reference.md) - API reference customizations (schema rendering, CSS overrides, upgrade notes)
 
 ### Guides (How-To)
 - [changelog.md](.claude/guides/changelog.md) - Writing changelog entries
@@ -57,3 +58,7 @@ Detailed documentation for Claude is organized in `.claude/`:
 5. **Toolkits data** - `public/data/toolkits.json` must exist; errors are thrown, not ignored.
 
 6. **Test on mobile** - Fumadocs nav differs on mobile. Avoid assumptions about horizontal layout.
+
+## AI-Native Documentation
+
+**Prefer cURL over "click"** - Most docs traffic comes from AI crawlers. When documenting API interactions, prefer showing cURL commands over UI instructions like "click this button" or "navigate to settings". cURL is machine-readable and can be directly executed by AI agents.

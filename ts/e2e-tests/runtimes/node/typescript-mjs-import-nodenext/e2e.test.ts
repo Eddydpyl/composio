@@ -17,7 +17,7 @@ declare module 'bun' {
 }
 
 e2e(import.meta.url, {
-  nodeVersions: ['current'],
+  versions: { node: ['current'] },
   env: {
     COMPOSIO_API_KEY: Bun.env.COMPOSIO_API_KEY,
   },
@@ -25,7 +25,7 @@ e2e(import.meta.url, {
     let result: E2ETestResult;
 
     beforeAll(async () => {
-      result = await runFixture('fixtures/index.mjs');
+      result = await runFixture({ filename: 'fixtures/index.mjs' });
     }, 300_000);
 
     describe('TypeScript .mjs import resolution', () => {

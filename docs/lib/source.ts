@@ -4,6 +4,20 @@ import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { openapi } from './openapi';
 import { openapiSource, openapiPlugin } from 'fumadocs-openapi/server';
 
+/**
+ * Transformer to set defaultOpen: true for specific folders in the reference sidebar.
+ * This is needed because openapiSource doesn't support meta.json files.
+ */
+const defaultOpenTransformer = {
+  folder(node: { name: string; defaultOpen?: boolean }, folderPath: string) {
+    // Set defaultOpen for API Reference and SDK Reference folders
+    if (folderPath === 'api-reference' || folderPath === 'sdk-reference') {
+      return { ...node, defaultOpen: true };
+    }
+    return node;
+  },
+};
+
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
   baseUrl: '/docs',
@@ -38,6 +52,10 @@ export async function getReferenceSource() {
         openapi: openapiPages,
       }),
       plugins: [lucideIconsPlugin(), openapiPlugin()],
+      pageTree: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transformers: [defaultOpenTransformer as any],
+      },
     });
   }
   return _referenceSource;
@@ -260,7 +278,32 @@ export function mdxToCleanMarkdown(content: string): string {
   // Clean up excessive newlines
   result = result.replace(/\n{3,}/g, '\n\n');
 
+  // Strip twoslash annotations ONLY inside code blocks (used for type-checking, not useful for AI)
+  // These include: // ---cut---, // @errors, // ^?, // @noErrors, etc.
+  result = stripTwoslashFromCodeBlocks(result);
+
   return result.trim();
+}
+
+/**
+ * Strip twoslash annotations only from inside code blocks.
+ * This ensures we don't accidentally modify prose content.
+ */
+function stripTwoslashFromCodeBlocks(content: string): string {
+  // Match code blocks: ```lang ... ```
+  return content.replace(/(```[\w]*\n)([\s\S]*?)(```)/g, (match, open, code, close) => {
+    let cleanCode = code;
+    // Remove twoslash directives
+    cleanCode = cleanCode.replace(/^\/\/\s*---cut---.*\n?/gm, '');
+    cleanCode = cleanCode.replace(/^\/\/\s*@errors?:.*\n?/gm, '');
+    cleanCode = cleanCode.replace(/^\/\/\s*@noErrors.*\n?/gm, '');
+    cleanCode = cleanCode.replace(/^\/\/\s*@filename:.*\n?/gm, '');
+    cleanCode = cleanCode.replace(/^\/\/\s*@highlight.*\n?/gm, '');
+    cleanCode = cleanCode.replace(/^\/\/\s*\^[\?\!].*\n?/gm, ''); // ^? and ^! hover annotations
+    // Clean up resulting empty lines at start of code block
+    cleanCode = cleanCode.replace(/^\n+/, '');
+    return open + cleanCode + close;
+  });
 }
 
 export async function getLLMText(page: InferPageType<typeof source>) {
@@ -296,7 +339,11 @@ ${page.data.description || ''}`;
 
   return `# ${page.data.title} (${page.url})
 
-${cleanContent}`;
+${cleanContent}
+
+---
+
+📚 **More documentation:** [View all docs](https://docs.composio.dev/llms.txt) | [Examples](https://docs.composio.dev/llms.mdx/examples) | [API Reference](https://docs.composio.dev/llms.mdx/reference)`;
 }
 
 export function formatDate(dateStr: string): string {
